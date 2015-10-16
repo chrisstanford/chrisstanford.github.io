@@ -105,7 +105,7 @@ body {
   text-align: center;
   width:30%;
   min-width: 100px;
-  float: left;
+  float: right;
   height:108%;
   overflow:hidden;
 }
