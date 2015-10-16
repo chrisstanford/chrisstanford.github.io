@@ -101,22 +101,23 @@ body {
   padding-left: 5px;
 }
 
+.rightdiv {
+  width: 65%;
+  min-width: 300px;
+  height: 100%;
+  float:left;
+  padding-left: 5px;
+}
+
 .cardpreviewdiv {
   text-align: center;
-  width:30%;
+  width:35%;
   min-width: 100px;
-  float: right;
+  float: left;
   height:108%;
   overflow:hidden;
 }
 
-.rightdiv {
-  width: 45%;
-  min-width: 300px;
-  height: 100%;
-  float:left;
-  padding-right: 5px;
-}
 
 h1 {
   width: 100%;
