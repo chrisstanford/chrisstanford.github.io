@@ -394,18 +394,18 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 	text=text.replace(/Action:([^<])/g,"<b>Action:</b>$1");
 	text=text.replace(/([^>])Valour/g,"$1<b>Valour</b>");
 	
-	text=text.replace(/Attack/g,"<img src='img/strength.gif'/>");
-	text=text.replace(/Willpower/g,"<img src='img/willpower.gif'/>");
-	text=text.replace(/Defense/g,"<img src='img/defense.gif'/>");
-	text=text.replace(/Threat/g,"<img src='img/threat.png'/>");
+	text=text.replace(/Attack/g,"<img src='images/strength.gif'/>");
+	text=text.replace(/Willpower/g,"<img src='images/willpower.gif'/>");
+	text=text.replace(/Defense/g,"<img src='images/defense.gif'/>");
+	text=text.replace(/Threat/g,"<img src='images/threat.png'/>");
 	
-	text=text.replace(/Leadership/g,"<img src='img/spheres/1leadership.png'/>");
-	text=text.replace(/Tactics/g,"<img src='img/spheres/2tactics.png'/>");
-	text=text.replace(/Spirit/g,"<img src='img/spheres/3spirit.png'/>");
-	text=text.replace(/Lore/g,"<img src='img/spheres/4lore.png'/>");
-	text=text.replace(/Neutral/g,"<img src='img/spheres/5neutral.png'/>");
-	text=text.replace(/Baggins/g,"<img src='img/spheres/6baggins.png'/>");
-	text=text.replace(/Fellowship/g,"<img src='img/spheres/7fellowship.png'/>");
+	text=text.replace(/Leadership/g,"<img src='images/spheres/1leadership.png'/>");
+	text=text.replace(/Tactics/g,"<img src='images/spheres/2tactics.png'/>");
+	text=text.replace(/Spirit/g,"<img src='images/spheres/3spirit.png'/>");
+	text=text.replace(/Lore/g,"<img src='images/spheres/4lore.png'/>");
+	text=text.replace(/Neutral/g,"<img src='images/spheres/5neutral.png'/>");
+	text=text.replace(/Baggins/g,"<img src='images/spheres/6baggins.png'/>");
+	text=text.replace(/Fellowship/g,"<img src='images/spheres/7fellowship.png'/>");
 	
 	text=text.replace(/CARDNAME/g,cardname);
 	
@@ -428,7 +428,7 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
             image.defense = card.defense;
             image.hitpoints = card.hitpoints;
             image.unique = card.unique;
-            image.sphere = "img/spheres/"+card.sphere+".png";
+            image.sphere = "images/spheres/"+card.sphere+".png";
             image.type = card.type.substr(1,1).toUpperCase() + card.type.substr(2);
 	}
     }
