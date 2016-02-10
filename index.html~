@@ -1,0 +1,14 @@
+<!doctype html> 
+<html class=no-js> 
+<head> 
+<meta charset=utf-8> 
+<title>Love of Tales</title> 
+<meta name=description> 
+<meta name=viewport content="width=device-width">
+<link rel=stylesheet href=styles/main.css>
+</head> <body ng-app=yapp>
+<div ui-view></div>
+<script src=scripts/vendor.js></script>
+<script src=scripts/scripts.js></script>
+</body>
+</html> 
