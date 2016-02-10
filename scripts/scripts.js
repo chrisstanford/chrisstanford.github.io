@@ -1386,6 +1386,7 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 .controller('init',['getData','$location','deck','cardObject','$scope',function(getData,$location,deck,cardObject,$scope){
     console.log("Init");
     getData.async('cards.json').then(function(data) {
+	cardObject.length=0;
 	for (var d in data) {
 	    cardObject.push(data[d]);
 	}

@@ -3,19 +3,24 @@
         <div class=row>
             <div class="col-sm-3 col-md-2 sidebar">
                 <div class=text-center>
-                    <h2 class=brand>Love of Tales</h2>
+                    <h2 class=brand><img src=images/tales.png height="52" width="52">     
+						Love of Tales<br>
+						<small>
+							Welcome {{displayName}}
+							<a ng-click="logOut()" ng-show="authData" class="btn btn-white btn-outline btn-rounded btn-sm">Log Out</a>
+							<a ng-click="logIn()" ng-hide="authData" class="btn btn-white btn-outline btn-rounded btn-sm">Log In</a>
+						</small>
+					</h2>
+
 					<div >
-						Welcome {{displayName}}
-						<br>
-						<a ng-click="logOut()" ng-show="authData" class="btn btn-white btn-outline btn-rounded btn-sm">Log Out</a>
-						<a ng-click="logIn()" ng-hide="authData" class="btn btn-white btn-outline btn-rounded btn-sm">Log In</a>
+
 					</div>
                     <!-- <img src=images/tales.png class=user-avatar><br> -->
                     <div class="cardpreviewdiv" ng-controller="previewCtrl as preview">
                         <div>
 
 
-                            <div style="position:absolute;width:100%;left:0%;" ng-hide="preview.name()==' ()'">{{preview.name()}}<br/>
+                            <div style="position:absolute;width:90%;left:5%;" ng-hide="preview.name()==' ()'">{{preview.name()}}<br/>
                                 <div style="left:25%;width:100%;">
 
                                         <a class="btn btn-white btn-outline btn-rounded btn-sm" href ng-click="preview.setTab('img')" ng-class="{activetab: preview.isSet('img')}">Image</a>
