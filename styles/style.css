@@ -473,3 +473,6 @@ canvas {
   margin: 0;
   padding: 0;
 }
+tr.selected {
+  background-color: #cccccc;
+}

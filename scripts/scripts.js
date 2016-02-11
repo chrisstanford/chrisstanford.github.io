@@ -4,7 +4,9 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 
 
 .config(["$stateProvider", "$urlRouterProvider", function(r, t) {
-    t.when("/dashboard", "/dashboard/builder"), t.otherwise("/login"), r.state("base", {
+    t.when("/dashboard", "/dashboard/builder"),
+	t.otherwise("/login"),
+	r.state("base", {
         "abstract": !0,
         url: "",
         templateUrl: "views/base.html"
@@ -35,9 +37,12 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
         url: "/sets",
         parent: "dashboard",
         templateUrl: "views/dashboard/sets.html"
+    }).state("community", {
+        url: "/community",
+        parent: "dashboard",
+        templateUrl: "views/dashboard/community.html"
     })
 }])
-
 .controller("LoginCtrl", ["$scope", "$location",'$rootScope', '$firebaseAuth', '$firebaseArray',  function($scope, $location, $rootScope, $firebaseAuth, $firebaseArray) {
     // var ref = new Firebase('https://seastan-lotrdb.firebaseio.com/');
     // $rootScope.auth = $firebaseAuth(ref);
@@ -71,8 +76,6 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 
 }])
 .controller("SignupCtrl", ["$scope", "$location",'$rootScope', '$firebaseAuth', '$firebaseArray', '$firebaseObject',  function($scope, $location, $rootScope, $firebaseAuth, $firebaseArray, $firebaseObject) {
-    // var ref = new Firebase('https://seastan-lotrdb.firebaseio.com/');
-    // $rootScope.auth = $firebaseAuth(ref);
     $scope.message='';
 
     // Sign up
@@ -156,32 +159,13 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 
 .controller("DashboardCtrl", ["$scope","$rootScope","$state","$location","$firebase","$firebaseArray","$firebaseObject","$firebaseAuth",function($scope,$rootScope,$state,$location,$firebase,$firebaseArray,$firebaseObject,$firebaseAuth) {
     $scope.$state = $state;
-    // $scope.displayName = 'Guest';
-    // var ref = new Firebase('https://seastan-lotrdb.firebaseio.com/');    
-    // $rootScope.auth = $firebaseAuth(ref);    
-    // $rootScope.auth.$onAuth(function(authData) {
-    // 	$scope.authData = authData;
-    // 	if (authData) {
-    // 	    console.log("Logged in as: "+authData.uid);
-    // 	    var usersArray = $firebaseArray(ref.child('users'));
-    // 	    usersArray.$loaded().then(function() {
-    // 		var user = usersArray.$getRecord(authData.uid);
-    // 		if (!user) {
-    // 		    console.log("Could not find user!");
-    // 		    return;
-    // 		}
-    // 		$scope.displayName = user.username;
-    // 	    });
-    // 	}
-    // 	else
-    // 	    console.log("onAuth Fail");
-    // });
+
     // Log out
     $scope.logOut = function() {
 	console.log("Logging out");
 	$rootScope.auth.$unauth();
 	$scope.displayName = 'Guest';
-//	return $location.path("/login");
+	return $location.path("/login");
     }
     $scope.logIn = function() {
 	console.log("Logging out");
@@ -192,35 +176,34 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
     
 }])
 
-
-
 .controller("authCtrl", ["$scope","$rootScope","$state","$location","$firebase","$firebaseArray","$firebaseObject","$firebaseAuth",function($scope,$rootScope,$state,$location,$firebase,$firebaseArray,$firebaseObject,$firebaseAuth) {
-    $scope.displayName = 'Guest';
+    $rootScope.displayName = 'Guest';
     $rootScope.ref = new Firebase('https://seastan-lotrdb.firebaseio.com/');    
-    $rootScope.users = $firebaseObject($rootScope.ref.child('users'));
-    $rootScope.decks = $firebaseObject($rootScope.ref.child('decks'));
-    $rootScope.logs  = $firebaseObject($rootScope.ref.child('logs'));
+    //$rootScope.users = $firebaseObject($rootScope.ref.child('users'));
+    //$rootScope.userdecks = $firebaseObject($rootScope.ref.child('decks'));
+    //$rootScope.userlogs  = $firebaseObject($rootScope.ref.child('logs'));
     $rootScope.auth  = $firebaseAuth($rootScope.ref);    
     $rootScope.auth.$onAuth(function(authData) {
-    	$scope.authData = authData;
+		$rootScope.authData = authData;
     	if (authData) {
     	    console.log("Logged in as: "+authData.uid);
-	    var usersArray = $firebaseArray($rootScope.ref.child('users'));
-	    usersArray.$loaded().then(function() {
-		var user = usersArray.$getRecord(authData.uid);
-		if (!user) {
-		    console.log("Could not find user!");
-		    return;
-		}
-		$scope.displayName = user.username;
+	    var user = $firebaseObject($rootScope.ref.child('users').child(authData.uid));
+	    user.$loaded().then(function() {
+			if (!user) {
+				console.log("Could not find user!");
+				return;
+			}
+			$rootScope.displayName = user.username;
+//			$rootScope.user = user;
+//			$rootScope.userdecks = user.decks;
+//			$rootScope.userlogs = user.logs;
+			
 	    });
 	}
     	else
     	    console.log("onAuth Fail");
     });
 }])
-
-
 
 // From Rivendell Councilroom
 
@@ -259,6 +242,7 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
     };
 })
 
+
 //Services
 .service('previewService',[function(){
     var tab='img';
@@ -278,6 +262,93 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
     };
 })
 // Factories
+.factory('generateDeckID',function() {
+	var generateDeckID = function() {
+		var text = "";
+		var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+		for( var i=0; i < 8; i++ )
+			text += possible.charAt(Math.floor(Math.random() * possible.length));
+		return text;
+	};
+	return generateDeckID;
+})
+
+.factory('getDeckString',['deck','getCardID', function(deck,getCardID) {
+	var decklist = []; // List of cardID+quantity
+	var types = ["1hero","2ally","3attachment","4event","5quest"]
+	var getDeckString = function(deck) {
+	    for (var t in types){
+			var type = types[t];
+			for (var c in deck[type]){
+				var card = deck[type][c];
+				decklist.push(getCardID(card)+deck.quantity(card));
+			}
+	    }
+	    decklist.sort();
+	    return decklist.join("");
+	}
+	return getDeckString;
+}])
+.factory('getCardFromCardID',['cardObject','getCardID', function(cardObject,getCardID) {
+	var card = function(cardID) {
+		cardID = cardID.substr(0,3); // In case quatity was also passed as the 4th character in cardID
+        for (var c in cardObject) {
+            if (getCardID(cardObject[c]) == cardID) {
+                var foundCard = cardObject.slice(+c, +c + 1)[0]; //create a copy of the card, not changing the cardObject
+				return foundCard;
+            }
+            
+        }
+		return {};
+	}
+	return card;
+}])
+.factory('getHeroesFromDeckString',['getCardFromCardID', function(getCardFromCardID) {
+	var heroes = function(deckString) {
+		var herolist = [];
+		for (var i=0; i<=(deckString.length-4); i=i+4) {
+			var cardID = deckString.substr(i,3);
+			var card = getCardFromCardID(cardID);
+			if (card.type == '1hero') herolist.push(card);
+		}
+		return herolist;
+	}
+	return heroes;
+}])
+.factory('getCardID',['getSetID', function(getSetID) {
+	var getCardID = function(card) {
+	    return getSetID(card.exp)+('0'+card.no.toString(16)).substr(-2);
+	}
+	return getCardID; 
+}])
+  
+.factory('getSetID',function(){
+	var getSetID = function(set) { 
+	    if (set=='core') return 'A';
+	    else if (set=='thfg'||set=='catc'||set=='ajtr'||set=='thoem'||set=='tdm'||set=='rtm') return 'B';
+	    else if (set=='kd') return 'C';
+	    else if (set=='trg'||set=='rtr'||set=='twitw'||set=='tld'||set=='fos'||set=='saf') return 'D';
+	    else if (set=='hon') return 'E';
+	    else if (set=='tsf'||set=='tdf'||set=='eaad'||set=='aoo'||set=='tbog'||set=='tmv') return 'F';
+	    else if (set=='voi') return 'G';
+	    else if (set=='tdt'||set=='ttt'||set=='tit'||set=='tnie'||set=='cs'||set=='tac') return 'H';
+	    else if (set=='tlr') return 'I';
+	    else if (set=='twoe'||set=='efmg'||set=='ate'||set=='ttot'||set=='tbocd'||set=='tdr') return 'J';
+	    else if (set=='tgh') return 'K';
+	    else if (set=='fots'||set=='ttitd'||set=='totd'||set=='tdr') return 'K';
+
+	    else if (set=='thohauh') return 'a';	    
+	    else if (set=='thotd') return 'b';
+	    else if (set=='tbr') return 'c';
+	    else if (set=='trd') return 'd';    
+	    else if (set=='tos') return 'e';    
+	    else if (set=='tlos') return 'f';    
+	    else if (set=='tfotw') return 'g';
+    
+	    else return '_';
+	}
+	return getSetID;
+})
 .factory('translate',function(){
     var translate={};
     translate[""]="";
@@ -1341,44 +1412,35 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
     deck.empty = function() {
 	return (deck.countAllies()+deck.countAttachments()+deck.countEvents()+deck.countQuests()+deck.countHeroes())==0;
     };
-    
-    deck.load = function(deckArray,cardObject,deckname) {
-	if (Object.prototype.toString.apply(deckArray) == "[object Object]") {
-            deck.deckname = deckname;
-            deck.loadLegacy(deckArray);
-            return 0;
-            
-	}
-	deck['1hero']=[];
-	deck['2ally']=[];
-	deck['3attachment']=[];
-	deck['4event']=[];
-	deck['5quest']=[];
-	deck.deckname = deckArray[0];
-	for (var i=1; i<deckArray.length; i++) {
-            for (var j in cardObject) {
-		if (deckArray[i][0]==cardObject[j].cycle
-		    &&  deckArray[i][1]==cardObject[j].no) {
-		    var card = cardObject.slice(+j,+j+1)[0]; //create a copy of the card, not changing the cardObject
-		    card.quantity = deckArray[i][2];
-		    deck[card.type].push(card);
-		}
-            }
-	}
-	suggested.clearBlacklist();
-	suggested.deckChange(this);
+    deck.clear = function() {
+        deck["1hero"] = [];
+        deck["2ally"] = [];
+        deck["3attachment"] = [];
+        deck["4event"] = [];
+        deck["5quest"] = [];
+        deck.deckname = "";
+		suggested.clearBlacklist();
+		suggested.deckChange(deck);
     };
-    
-    deck.loadLegacy = function(deckObject) {
-	deck['1hero']=deckObject['1hero'];
-	deck['2ally']=deckObject['2ally'];
-	deck['3attachment']=deckObject['3attachment'];
-	deck['4event']=deckObject['4event'];
-	deck['5quest']=deckObject['5quest'];
-    };   
     return deck;
 }])
 
+.factory('loadDeckIntoBuilder', ['deck','cardObject','$location','getCardFromCardID',function(deck,cardObject,$location,getCardFromCardID){
+	var loadDeckIntoBuilder = function(deckObject) {
+		deck.clear();
+		deck.deckname = deckObject.deckname;
+		var deckString = deckObject.deckstring;
+		for (var i=0; i<=(deckString.length-4); i=i+4) {
+			var cardID = deckString.substr(i,3);
+			var card = getCardFromCardID(cardID);
+			card.quantity = deckString.substr(i+3,1);
+			deck[card.type].push(card);
+		}
+		return $location.path("/dashboard/builder")
+	}
+	return loadDeckIntoBuilder;
+	
+}])
 //
 // Controllers
 //
@@ -1486,12 +1548,35 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 	$localStorage.pack = this.filtersettings.pack;
     };
 }])
-.controller('deckCtrl',['$scope','deck','image',function($scope,deck,image){
-    $scope.deck=deck;
+.controller('deckCtrl', ['$scope', '$rootScope', 'deck', 'image', 'getDeckString', 'generateDeckID','$firebaseObject','$location', function($scope, $rootScope, deck, image, getDeckString, generateDeckID,$firebaseObject,$location) {
+    $scope.deck = deck;
     console.log('deckCtrl initialized.')
-    this.changepreview = function(card){
-	image.update(card);
+    this.changepreview = function(card) {
+        image.update(card);
     };
+    $scope.saveDeck = function() {
+		console.log("Saving deck");
+        if (!$rootScope.authData) {
+            return $location.path("/login");
+        }
+        if (deck.empty()) {
+            return alert('Deck is empty!');
+        };
+        if ($scope.deckname == "") {
+            return alert('Please enter a name!');
+        };
+        var deckid = generateDeckID();
+        var newDeck = $firebaseObject($rootScope.ref.child('users').child($rootScope.authData.uid).child('decks').child(deckid));
+        newDeck.deckname = $scope.deckname;
+        newDeck.dateUTC = new Date().valueOf().toString();
+        newDeck.deckstring = getDeckString(deck);
+        newDeck.$save().then(function(ref) {
+			console.log("Deck saved.");
+			return $location.path("/dashboard/mydecks");
+		}, function(error) {
+            console.log("Error saving deck:", error);
+        });
+    }
 }])
 .controller('suggestedCtrl',['$scope','suggested','image',function($scope,suggested,image){
     $scope.suggested=suggested;
@@ -1525,5 +1610,548 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
     };
     this.setTab('img');
 }])
-  
-;
+
+
+
+.controller('myDecksCtrl', ['deck', 'getDeckString', '$localStorage', 'translate', '$scope', '$rootScope', 'cardObject', '$location', '$firebaseObject','$firebaseArray','getHeroesFromDeckString','loadDeckIntoBuilder','getCardFromCardID',
+	function(deck, getDeckString, $localStorage, translate, $scope, $rootScope, cardObject, $location,$firebaseObject,$firebaseArray,getHeroesFromDeckString,loadDeckIntoBuilder,getCardFromCardID) {
+    this.myDecksArray = $firebaseArray($rootScope.ref.child('users').child($rootScope.authData.uid).child('decks'));
+	// $scope.myDecksObject.$loaded.then(function() {
+		// $scope.myDecksArray = Object.keys($scope.data)
+			// .map(function(key) {
+				// return $scope.data[key];
+			// });
+		// });
+	if (!$rootScope.authData) {
+        return $location.path("/login");
+    }
+	this.selectedDeck = null;
+	this.setSelected = function(selectedDeck) {
+       this.selectedDeck = selectedDeck;
+    }
+	this.getSelected = function() {
+       return this.selectedDeck;
+    }
+	this.getHeroes = function(deckString) {
+		var heroNames = '';
+		var heroes = getHeroesFromDeckString(deckString);
+		for (var h in heroes)
+			heroNames+=heroes[h].name_norm+' ';
+		return heroNames;
+	}
+	this.deleteDeck = function(deckObject) {
+		if (confirm('Are you sure you want to delete: '+deckObject.deckname)) {
+            this.myDecksArray.$remove(deckObject);
+		};
+	}
+	this.loadDeck = function(deckObject) {
+		loadDeckIntoBuilder(deckObject);
+	}	
+	
+
+    this.download = function(filename,text) {
+        var pom = document.createElement('a');
+        pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+        pom.setAttribute('download', filename);
+
+        pom.style.display = 'none';
+        document.body.appendChild(pom);
+
+        pom.click();
+
+        document.body.removeChild(pom);
+    }
+
+    String.prototype.chunk = function(n) {
+        var ret = [];
+        for (var i = 0, len = this.length; i < len; i += n) {
+            ret.push(this.substr(i, n))
+        }
+        return ret
+    };
+
+    this.plaintext = function(deckObject) {
+        var deck = {};
+        deck["1hero"] = [];
+        deck["2ally"] = [];
+        deck["3attachment"] = [];
+        deck["4event"] = [];
+        deck["5quest"] = [];
+
+		deck.deckname = deckObject.deckname;
+		var deckString = deckObject.deckstring;
+		for (var i=0; i<=(deckString.length-4); i=i+4) {
+			var cardID = deckString.substr(i,3);
+			var card = getCardFromCardID(cardID);
+			card.quantity = deckString.substr(i+3,1);
+			deck[card.type].push(card);
+		}
+
+        var text = "";
+        text += deck.deckname;
+        text += "\r\n\r\nTotal Cards: ";
+        var total = 0;
+        var types = ["2ally", "3attachment", "4event", "5quest"]
+        for (var t in types) {
+            var type = types[t];
+            for (var i in deck[type]) {
+                total += deck[type][i].quantity;
+            }
+        }
+        text += total;
+        text += "\r\n\r\n";
+        if (deck["1hero"].length) {
+            text += "Heroes (starting threat: ";
+            var threat = 0;
+            for (var i in deck["1hero"]) {
+                threat += deck["1hero"][i].cost;
+            }
+            text += threat;
+            text += ")\r\n"
+            for (var i in deck["1hero"]) {
+                var h = deck["1hero"].sort(function(a, b) {
+                    return a.name > b.name ? 1 : -1
+                })[i];
+                text += "     ";
+                text += h.name;
+                text += " (";
+                text += translate[h.exp];
+                text += ")\r\n";
+            }
+        }
+        for (var t in types) {
+            var type = types[t];
+            if (deck[type].length) {
+                switch (type) {
+                    case "2ally":
+                        text += "Allies";
+                        break;
+                    case "3attachment":
+                        text += "Attachments";
+                        break;
+                    case "4event":
+                        text += "Events";
+                        break;
+                    case "5quest":
+                        text += "Quests";
+                        break;
+                }
+                text += " (";
+                var number = 0;
+                for (var i in deck[type]) {
+                    number += deck[type][i].quantity;
+                }
+                text += number;
+                text += ")\r\n"
+                var t = deck[type].sort(function(a, b) {
+                    return (a.sphere == b.sphere) ? ((a.name > b.name) ? 1 : -1) : ((a.sphere > b.sphere) ? 1 : -1)
+                });
+                for (var i in deck[type]) {
+                    text += "  ";
+                    text += t[i].quantity;
+                    text += "x ";
+                    text += t[i].name;
+                    text += " (";
+                    text += translate[t[i].exp];
+                    text += ")\r\n";
+                }
+            }
+        }
+
+        return text;
+    }
+
+
+    this.markdown = function(deckObject) {
+        var deck = {};
+        deck["1hero"] = [];
+        deck["2ally"] = [];
+        deck["3attachment"] = [];
+        deck["4event"] = [];
+        deck["5quest"] = [];
+
+		deck.deckname = deckObject.deckname;
+		var deckString = deckObject.deckstring;
+		for (var i=0; i<=(deckString.length-4); i=i+4) {
+			var cardID = deckString.substr(i,3);
+			var card = getCardFromCardID(cardID);
+			card.quantity = deckString.substr(i+3,1);
+			deck[card.type].push(card);
+		}
+
+        var text = "#[";
+        text += deck.deckname;
+        text += "](http://seastan.github.io/";
+        text += 'tbc';
+        text += ")  \r\nTotal Cards: ";
+        var total = 0;
+        var types = ["2ally", "3attachment", "4event", "5quest"]
+        for (var t in types) {
+            var type = types[t];
+            for (var i in deck[type]) {
+                total += deck[type][i].quantity;
+            }
+        }
+        text += total;
+        text += "  \r\n\r\n";
+        if (deck["1hero"].length) {
+            text += "**Heroes** (starting threat: ";
+            var threat = 0;
+            for (var i in deck["1hero"]) {
+                threat += deck["1hero"][i].cost;
+            }
+            text += threat;
+            text += ")  \r\n"
+            for (var i in deck["1hero"]) {
+                var h = deck["1hero"].sort(function(a, b) {
+                    return a.name > b.name ? 1 : -1
+                })[i];
+                text += "    [";
+                text += h.name;
+                text += "](http://hallofbeorn.com/Cards/Details/";
+                text += h.name_norm.replace(/ /g, '-');
+                text += '-';
+                text += h.exp;
+                text += ") (*";
+                text += translate[h.exp];
+                text += "*)  \r\n";
+            }
+        }
+        for (var t in types) {
+            var type = types[t];
+            if (deck[type].length) {
+                switch (type) {
+                    case "2ally":
+                        text += "**Allies**";
+                        break;
+                    case "3attachment":
+                        text += "**Attachments**";
+                        break;
+                    case "4event":
+                        text += "**Events**";
+                        break;
+                    case "5quest":
+                        text += "**Quests**";
+                        break;
+                }
+                text += " (";
+                var number = 0;
+                for (var i in deck[type]) {
+                    number += deck[type][i].quantity;
+                }
+                text += number;
+                text += ")  \r\n"
+                var t = deck[type].sort(function(a, b) {
+                    return (a.sphere == b.sphere) ? ((a.name > b.name) ? 1 : -1) : ((a.sphere > b.sphere) ? 1 : -1)
+                });
+                for (var i in deck[type]) {
+                    text += " ";
+                    text += t[i].quantity;
+                    text += "x [";
+                    text += t[i].name;
+                    text += "](http://hallofbeorn.com/Cards/Details/";
+                    text += t[i].name_norm.replace(/ /g, '-');
+                    text += '-';
+                    text += t[i].exp;
+                    text += ") (*";
+                    text += translate[t[i].exp];
+                    text += "*)  \r\n";
+                }
+            }
+        }
+
+        text += "***\r\n^^Deck ^^built ^^with [^^Love ^^of ^^Tales](http://seastan.github.io/)";
+        return text;
+    }
+
+
+    this.bbcode = function(deckObject) {
+        var deck = {};
+        deck["1hero"] = [];
+        deck["2ally"] = [];
+        deck["3attachment"] = [];
+        deck["4event"] = [];
+        deck["5quest"] = [];
+
+		deck.deckname = deckObject.deckname;
+		var deckString = deckObject.deckstring;
+		for (var i=0; i<=(deckString.length-4); i=i+4) {
+			var cardID = deckString.substr(i,3);
+			var card = getCardFromCardID(cardID);
+			card.quantity = deckString.substr(i+3,1);
+			deck[card.type].push(card);
+		}
+		
+        var text = "[size=18][tbc]";
+        text += '[tbc';
+        text += "]";
+        text += deck.deckname;
+        text += "[/url]";
+        text += "[/size]\r\nTotal Cards: ";
+        var total = 0;
+        var types = ["2ally", "3attachment", "4event", "5quest"]
+        for (var t in types) {
+            var type = types[t];
+            for (var i in deck[type]) {
+                total += deck[type][i].quantity;
+            }
+        }
+        text += total;
+        text += "  \r\n\r\n";
+        if (deck["1hero"].length) {
+            text += "[b]Heroes[/b] (starting threat: ";
+            var threat = 0;
+            for (var i in deck["1hero"]) {
+                threat += deck["1hero"][i].cost;
+            }
+            text += threat;
+            text += ")  \r\n"
+            for (var i in deck["1hero"]) {
+                var h = deck["1hero"].sort(function(a, b) {
+                    return a.name > b.name ? 1 : -1
+                })[i];
+                text += "    ";
+                text += "[url=http://hallofbeorn.com/Cards/Details/";
+                text += h.name_norm.replace(/ /g, '-').replace(/\'/g, '%27');
+                text += '-';
+                text += h.exp;
+                text += "]";
+                text += h.name;
+                text += "[/url] ([i]";
+                text += translate[h.exp];
+                text += "[/i])  \r\n";
+            }
+        }
+        for (var t in types) {
+            var type = types[t];
+            if (deck[type].length) {
+                switch (type) {
+                    case "2ally":
+                        text += "[b]Allies[/b]";
+                        break;
+                    case "3attachment":
+                        text += "[b]Attachments[/b]";
+                        break;
+                    case "4event":
+                        text += "[b]Events[/b]";
+                        break;
+                    case "5quest":
+                        text += "[b]Quests[/b]";
+                        break;
+                }
+                text += " (";
+                var number = 0;
+                for (var i in deck[type]) {
+                    number += deck[type][i].quantity;
+                }
+                text += number;
+                text += ")  \r\n"
+                var t = deck[type].sort(function(a, b) {
+                    return (a.sphere == b.sphere) ? ((a.name > b.name) ? 1 : -1) : ((a.sphere > b.sphere) ? 1 : -1)
+                });
+                for (var i in deck[type]) {
+                    text += " ";
+                    text += t[i].quantity;
+                    text += "x ";
+                    text += "[url=http://hallofbeorn.com/Cards/Details/";
+                    text += t[i].name_norm.replace(/ /g, '-').replace(/'/g, '%27');
+                    text += '-';
+                    text += t[i].exp;
+                    text += "]";
+                    text += t[i].name;
+                    text += "[/url] ([i]";
+                    text += translate[t[i].exp];
+                    text += "[/i])  \r\n";
+                }
+            }
+        }
+
+        text += "\r\n[size=7]Deck built with [url=http://seastan.github.io/]Love of Tales[/url][/size]";
+        return text;
+    }
+
+    this.exportText = function(deckObject) {
+
+        var text = "++++++++++++\r\n+For Reddit+\r\n++++++++++++ \r\n\r\n";
+        text += this.markdown(deckObject);
+
+        text += "\r\n\r\n\r\n\r\n\r\n+++++++++++++++++++ \r\n+For Boardgamegeek+\r\n+++++++++++++++++++  \r\n\r\n";
+        text += this.bbcode(deckObject);
+
+        text += "\r\n\r\n\r\n\r\n\r\n+++++++++++ \r\n+Plaintext+\r\n+++++++++++  \r\n\r\n";
+        text += this.plaintext(deckObject);
+
+
+
+        text += "\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nDo not remove the part below, you will be unable to upload the deck if you do!\r\n";
+        text += "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\r\n";
+        text += deckObject.deckstring;
+        text += "\r\n++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+
+
+        this.download(deckObject.deckname + ".txt", text);
+    };
+
+    this.uploadDeck = function(event) {
+        var file = event.target.files[0];
+        if (file.name.indexOf(".o8d") >= 0) {
+            return this.uploadOctgn(file);
+        }
+        var deckname = file.name.replace('.txt', '');
+        var deck = this.currentdeck;
+        if (file) {
+            var r = new FileReader();
+            r.onload = function(e) {
+                var contents = e.target.result.replace(/(\r\n|\n|\r)/gm, ""); //strip newlines
+                var encoded = contents.match(/\+{80}([A-Za-z0-9+\-\r\n]+)\+{80}/gm)[0];
+                encoded = encoded.replace(/\+{80}/, "");
+                var decoded = JSON.parse(LZString.decompressFromEncodedURIComponent(encoded));
+                deck.load(decoded, cardObject);
+                $scope.$apply();
+            };
+            r.readAsText(file);
+        };
+    };
+
+    this.uploadOctgn = function(file) {
+        var deckname = file.name.replace('.o8d', '');
+        if (file) {
+            var r = new FileReader();
+            r.onload = function(e) {
+                var deckArray = [deckname];
+                var regexp = /<card\s+qty="(\d)"\s+id="([0-9a-f\-]+)">/gi,
+                    match;
+					
+				deck.clear();
+				deck.deckname = deckname;
+			
+                while (match = regexp.exec(e.target.result)) {
+                    for (var i in cardObject) {
+                        if (cardObject[i].octgn == match[2]) {
+							console.log(cardObject[i].name_norm+' '+cardObject[i].type);
+                            var card = cardObject.splice(i,1);
+							card.quantity = +match[1];
+							deck[card.type]=card;
+							
+                        }
+                    }
+                }
+            };
+            r.readAsText(file);
+        };
+		return $location.path("/dashboard/builder")
+    }
+
+    this.localOctgn = function(_deck) {
+        this.octgn($localStorage.decks[_deck.deckname].deck, _deck.deckname);
+    }
+
+
+    this.exportOctgn = function(deckObject) {
+
+        var octgndeck = {
+            "1hero": [],
+            "2ally": [],
+            "3attachment": [],
+            "4event": [],
+            "5quest": []
+        };
+        var warned = false;
+		
+		deck.deckname = deckObject.deckname;
+		var deckString = deckObject.deckstring;
+		for (var i=0; i<=(deckString.length-4); i=i+4) {
+			var cardID = deckString.substr(i,3);
+			var card = getCardFromCardID(cardID);
+			if (card.octgn == "") {
+                if (!warned) {
+                    window.alert("Warning: Omitting cards that are not yet available in OCTGN.");
+                    warned = true;
+                }
+                continue;
+            }
+			card.quantity = deckString.substr(i+3,1);
+			octgndeck[card.type].push(card);
+		}
+		
+
+        var text = "";
+        text += '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n';
+        text += '<deck game="a21af4e8-be4b-4cda-a6b6-534f9717391f">\n';
+
+        text += '  <section name="Hero" shared="False">\n';
+        for (var h in octgndeck["1hero"]) {
+            text += '    <card qty="';
+            text += octgndeck["1hero"][h].quantity;
+            text += '" id="';
+            text += octgndeck["1hero"][h].octgn;
+            text += '">';
+            text += octgndeck["1hero"][h].name_norm;
+            text += '</card>\n';
+        }
+        text += '  </section>\n';
+
+        text += '  <section name="Ally" shared="False">\n';
+        for (var h in octgndeck["2ally"]) {
+            text += '    <card qty="';
+            text += octgndeck["2ally"][h].quantity;
+            text += '" id="';
+            text += octgndeck["2ally"][h].octgn;
+            text += '">';
+            text += octgndeck["2ally"][h].name_norm;
+            text += '</card>\n';
+        }
+        text += '  </section>\n';
+
+        text += '  <section name="Event" shared="False">\n';
+        for (var h in octgndeck["4event"]) {
+            text += '    <card qty="';
+            text += octgndeck["4event"][h].quantity;
+            text += '" id="';
+            text += octgndeck["4event"][h].octgn;
+            text += '">';
+            text += octgndeck["4event"][h].name_norm;
+            text += '</card>\n';
+        }
+        text += '  </section>\n';
+
+        text += '  <section name="Attachment" shared="False">\n';
+        for (var h in octgndeck["3attachment"]) {
+            text += '    <card qty="';
+            text += octgndeck["3attachment"][h].quantity;
+            text += '" id="';
+            text += octgndeck["3attachment"][h].octgn;
+            text += '">';
+            text += octgndeck["3attachment"][h].name_norm;
+            text += '</card>\n';
+        }
+        text += '  </section>\n';
+
+        text += '  <section name="Side Quest" shared="False">\n';
+        for (var h in octgndeck["5quest"]) {
+            text += '    <card qty="';
+            text += octgndeck["5quest"][h].quantity;
+            text += '" id="';
+            text += octgndeck["5quest"][h].octgn;
+            text += '">';
+            text += octgndeck["5quest"][h].name_norm;
+            text += '</card>\n';
+        }
+        text += '  </section>\n';
+
+
+
+        text += '  <section name="Quest" shared="True" />\n'
+        text += '  <section name="Encounter" shared="True" />\n'
+        text += '  <section name="Special" shared="True" />\n'
+        text += '  <section name="Setup" shared="True" />\n'
+
+
+        text += '  <notes><![CDATA[]]></notes>';
+        text += '</deck>';
+
+        this.download(deck.deckname + ".o8d", text);
+    }
+
+
+}]);
