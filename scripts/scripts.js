@@ -2029,8 +2029,9 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
                     for (var i in cardObject) {
                         if (cardObject[i].octgn == match[2]) {
 							console.log(cardObject[i].name_norm+' '+cardObject[i].type);
-                            var card = cardObject.splice(i,1);
-							card.quantity = +match[1];
+                            var card = cardObject.slice(i,i+1)[0];
+							card.quantity = match[1];
+							console.log(card);
 							deck[card.type]=card;
 							
                         }
