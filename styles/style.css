@@ -76,7 +76,7 @@
 }
 
 .cardpreview {
-  width: 95%;
+  width: 100%;
   height: 100%;
   border: no;
 }
@@ -98,7 +98,6 @@ body {
 
 .deckdiv {
   width: 24%;
-  min-width: 200px;
   float: right;
   height:100%;
   overflow-y: auto;
@@ -107,7 +106,6 @@ body {
 
 .suggesteddiv {
   width: 24%;
-  min-width: 200px;
   float: right;
   height:100%;
   overflow-y: auto;
@@ -120,7 +118,7 @@ body {
   width:100%;
   /* min-width: 100px; */
   left:0.5%;
-  height:80%;
+  height:100%;
   /* overflow:hidden; */
 }
 

@@ -27,10 +27,10 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
         url: "/builder",
         parent: "dashboard",
         templateUrl: "views/dashboard/builder.html"
-    }).state("reports", {
-        url: "/reports",
+    }).state("mydecks", {
+        url: "/mydecks",
         parent: "dashboard",
-        templateUrl: "views/dashboard/reports.html"
+        templateUrl: "views/dashboard/mydecks.html"
     }).state("sets", {
         url: "/sets",
         parent: "dashboard",

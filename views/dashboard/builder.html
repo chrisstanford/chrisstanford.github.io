@@ -3,7 +3,7 @@
     <input ng-model="cards.filtersettings.search.name_norm" type="text" placeholder="Search by card name" style="width:25%;font-size:12px;margin-right:2%px;">
     <traits></traits>
     <input ng-model="cards.filtersettings.search.textc" type="text" placeholder="Search by card text" style="width:25%;font-size:12px;margin-right:2%;">
-    <button ng-click="cards.resetSearch();" class="packbutton" style="font-size:12px;width:10%;height:25px;">Reset</button>
+    <button ng-click="cards.resetSearch();" class="filterbutton" style="font-size:12px;width:10%;height:25px;">Reset</button>
     <br/>
     <div style="float:left;width:100%;">
       <!-- <div style="font-size:9px;width:100%;text-align:center;">Card Type</div><br/> -->
@@ -67,8 +67,11 @@
 
 <div ng-controller="deckCtrl">
 <div class="deckdiv">
-  
-  {{deck.deckname}}
+	<div ng-hide="deck.empty();">
+		<input type="text" placeholder="Deck name" style="left:10%;width:100%;font-size:12px;">
+		<button ng-click="cards.resetSearch();" class="filterbutton" style="font-size:12px;width:49%;height:25px;">Save</button>
+		<button ng-click="cards.resetSearch();" class="filterbutton" style="font-size:12px;width:49%;height:25px;">Clear Deck</button>
+	</div>
   <h4 ng-show="deck.countTotal()">Total Cards: {{deck.countTotal()}}</h4>
   <table class="deck">
     <tr class="head" ng-show="deck.countHeroes()"><td style="width:100px"></td><td>Heroes (Starting threat: {{deck.startingThreat()}})</td></tr>
@@ -118,13 +121,13 @@
 
 </div>
 <div class="suggesteddiv" ng-controller="suggestedCtrl as suggested">
-  <button class="packbutton" style="width:200px;height:25px" ng-show="(!suggested.empty()||suggested.blacklist.length)&&!suggested.hidden&&!deck.empty()" ng-click="suggested.hide()" ng-class="">
+  <button class="filterbutton" style="width:80%;height:25px" ng-show="(!suggested.empty()||suggested.blacklist.length)&&!suggested.hidden&&!deck.empty()" ng-click="suggested.hide()" ng-class="">
     Hide Suggestions
   </button>
-  <button class="packbutton" style="width:200px;height:25px" ng-show="(!suggested.empty()||suggested.blacklist.length)&&suggested.hidden&&!deck.empty()" ng-click="suggested.show()" ng-class="">
+  <button class="filterbutton" style="width:80%;height:25px" ng-show="(!suggested.empty()||suggested.blacklist.length)&&suggested.hidden&&!deck.empty()" ng-click="suggested.show()" ng-class="">
     Show Suggestions
   </button>
-  <button class="packbutton" style="width:200px;height:25px" ng-show="suggested.blacklist.length&&!suggested.hidden&&!deck.empty()" ng-click="suggested.clearBlacklist()" ng-class="">
+  <button class="filterbutton" style="width:80%;height:25px" ng-show="suggested.blacklist.length&&!suggested.hidden&&!deck.empty()" ng-click="suggested.clearBlacklist()" ng-class="">
     Clear Blocked Suggestions
   </button>
   <table class="suggested" ng-show="!suggested.hidden">
