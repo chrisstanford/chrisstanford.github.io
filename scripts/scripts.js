@@ -1346,6 +1346,9 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 	// Get list of suggestions for deck
 	suggested.deckChange(this);
     };
+    deck.refreshSuggested = function() {
+	suggested.deckChange(this);
+    };
     deck.quantity = function(card){
 	for (var c in deck[card.type]){
             if (deck[card.type][c].cycle==card.cycle && deck[card.type][c].no==card.no){
@@ -1433,7 +1436,7 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 		for (var i=0; i<=(deckString.length-4); i=i+4) {
 			var cardID = deckString.substr(i,3);
 			var card = getCardFromCardID(cardID);
-			card.quantity = deckString.substr(i+3,1);
+			card.quantity = +deckString.substr(i+3,1);
 			deck[card.type].push(card);
 		}
 		return $location.path("/dashboard/builder")
@@ -1495,7 +1498,7 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 		this.filtersettings.spheres[sphere] = false;
             }
 	}
-	this.filtersettings.spheres[s] = !(this.filtersettings.spheres[s]);
+	this.fitersettings.spheres[s] = !(this.filtersettings.spheres[s]);
     };
     this.orderby = function(o){
 	this.order = o;
@@ -1518,6 +1521,7 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 	$localStorage.pack = this.filtersettings.pack;
     };
     this.toggleonecore = function(){
+	console.log("One core.")
 	if(this.filtersettings.onecore){
             this.filtersettings.onecore=false;
 	} else {
@@ -1529,6 +1533,7 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 	$localStorage.onecore = this.filtersettings.onecore;
     };
     this.toggletwocore = function(){
+	console.log("Two core.")
 	if(this.filtersettings.twocore){
             this.filtersettings.twocore=false;
 	} else {
@@ -1555,31 +1560,35 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
         image.update(card);
     };
     $scope.saveDeck = function() {
-		console.log("Saving deck");
+	console.log("Saving deck");
         if (!$rootScope.authData) {
             return $location.path("/login");
         }
         if (deck.empty()) {
             return alert('Deck is empty!');
         };
-        if ($scope.deckname == "") {
+        if (deck.deckname == "") {
             return alert('Please enter a name!');
         };
         var deckid = generateDeckID();
         var newDeck = $firebaseObject($rootScope.ref.child('users').child($rootScope.authData.uid).child('decks').child(deckid));
-        newDeck.deckname = $scope.deckname;
-        newDeck.dateUTC = new Date().valueOf().toString();
-        newDeck.deckstring = getDeckString(deck);
-        newDeck.$save().then(function(ref) {
-			console.log("Deck saved.");
-			return $location.path("/dashboard/mydecks");
-		}, function(error) {
-            console.log("Error saving deck:", error);
-        });
+        newDeck.$loaded().then(function() {
+	    newDeck.deckname = deck.deckname;
+            newDeck.dateUTC = new Date().valueOf().toString();
+            newDeck.deckstring = getDeckString(deck);
+            newDeck.$save().then(function(ref) {
+		console.log("Deck saved.");
+		return $location.path("/dashboard/mydecks");
+	    }, function(error) {
+		console.log("Error saving deck:", error);
+            });
+	})
+	    
     }
 }])
-.controller('suggestedCtrl',['$scope','suggested','image',function($scope,suggested,image){
+.controller('suggestedCtrl',['$scope','suggested','image','deck',function($scope,suggested,image,deck){
     $scope.suggested=suggested;
+    deck.refreshSuggested();
     this.isSet = function(tabName){
   	return tabService.tab === tabName;
     };
@@ -1614,40 +1623,43 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 
 
 .controller('myDecksCtrl', ['deck', 'getDeckString', '$localStorage', 'translate', '$scope', '$rootScope', 'cardObject', '$location', '$firebaseObject','$firebaseArray','getHeroesFromDeckString','loadDeckIntoBuilder','getCardFromCardID',
-	function(deck, getDeckString, $localStorage, translate, $scope, $rootScope, cardObject, $location,$firebaseObject,$firebaseArray,getHeroesFromDeckString,loadDeckIntoBuilder,getCardFromCardID) {
-    this.myDecksArray = $firebaseArray($rootScope.ref.child('users').child($rootScope.authData.uid).child('decks'));
-	// $scope.myDecksObject.$loaded.then(function() {
-		// $scope.myDecksArray = Object.keys($scope.data)
-			// .map(function(key) {
-				// return $scope.data[key];
-			// });
-		// });
-	if (!$rootScope.authData) {
+function(deck, getDeckString, $localStorage, translate, $scope, $rootScope, cardObject, $location,$firebaseObject,$firebaseArray,getHeroesFromDeckString,loadDeckIntoBuilder,getCardFromCardID) {
+    // $scope.myDecksObject.$loaded.then(function() {
+    // $scope.myDecksArray = Object.keys($scope.data)
+    // .map(function(key) {
+    // return $scope.data[key];
+    // });
+    // });
+    if (!$rootScope.authData) {
         return $location.path("/login");
+    } else {
+	this.myDecksArray = $firebaseArray($rootScope.ref.child('users').child($rootScope.authData.uid).child('decks'));
     }
-	this.selectedDeck = null;
-	this.setSelected = function(selectedDeck) {
-       this.selectedDeck = selectedDeck;
+    this.selectedDeck = null;
+    this.setSelected = function(selectedDeck) {
+	this.selectedDeck = selectedDeck;
     }
-	this.getSelected = function() {
-       return this.selectedDeck;
+    this.getSelected = function() {
+	return this.selectedDeck;
     }
-	this.getHeroes = function(deckString) {
-		var heroNames = '';
-		var heroes = getHeroesFromDeckString(deckString);
-		for (var h in heroes)
-			heroNames+=heroes[h].name_norm+' ';
-		return heroNames;
-	}
-	this.deleteDeck = function(deckObject) {
-		if (confirm('Are you sure you want to delete: '+deckObject.deckname)) {
+    this.getHeroes = function(deckString) {
+	var heroNames = '';
+	var heroes = getHeroesFromDeckString(deckString);
+	for (var h in heroes)
+	    heroNames+=heroes[h].name_norm+' ';
+	return heroNames;
+    }
+    this.deleteDeck = function(deckObject) {
+	if (!deckObject) return alert("Please select a deck.");
+	if (confirm('Are you sure you want to delete: '+deckObject.deckname)) {
             this.myDecksArray.$remove(deckObject);
-		};
-	}
-	this.loadDeck = function(deckObject) {
-		loadDeckIntoBuilder(deckObject);
-	}	
-	
+	};
+    }
+    this.loadDeck = function(deckObject) {
+	if (!deckObject) return alert("Please select a deck.");
+	loadDeckIntoBuilder(deckObject);
+    }	
+    
 
     this.download = function(filename,text) {
         var pom = document.createElement('a');
@@ -1678,14 +1690,14 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
         deck["4event"] = [];
         deck["5quest"] = [];
 
-		deck.deckname = deckObject.deckname;
-		var deckString = deckObject.deckstring;
-		for (var i=0; i<=(deckString.length-4); i=i+4) {
-			var cardID = deckString.substr(i,3);
-			var card = getCardFromCardID(cardID);
-			card.quantity = deckString.substr(i+3,1);
-			deck[card.type].push(card);
-		}
+	deck.deckname = deckObject.deckname;
+	var deckString = deckObject.deckstring;
+	for (var i=0; i<=(deckString.length-4); i=i+4) {
+	    var cardID = deckString.substr(i,3);
+	    var card = getCardFromCardID(cardID);
+	    card.quantity = deckString.substr(i+3,1);
+	    deck[card.type].push(card);
+	}
 
         var text = "";
         text += deck.deckname;
@@ -1723,18 +1735,18 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
             var type = types[t];
             if (deck[type].length) {
                 switch (type) {
-                    case "2ally":
-                        text += "Allies";
-                        break;
-                    case "3attachment":
-                        text += "Attachments";
-                        break;
-                    case "4event":
-                        text += "Events";
-                        break;
-                    case "5quest":
-                        text += "Quests";
-                        break;
+                case "2ally":
+                    text += "Allies";
+                    break;
+                case "3attachment":
+                    text += "Attachments";
+                    break;
+                case "4event":
+                    text += "Events";
+                    break;
+                case "5quest":
+                    text += "Quests";
+                    break;
                 }
                 text += " (";
                 var number = 0;
@@ -1770,14 +1782,14 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
         deck["4event"] = [];
         deck["5quest"] = [];
 
-		deck.deckname = deckObject.deckname;
-		var deckString = deckObject.deckstring;
-		for (var i=0; i<=(deckString.length-4); i=i+4) {
-			var cardID = deckString.substr(i,3);
-			var card = getCardFromCardID(cardID);
-			card.quantity = deckString.substr(i+3,1);
-			deck[card.type].push(card);
-		}
+	deck.deckname = deckObject.deckname;
+	var deckString = deckObject.deckstring;
+	for (var i=0; i<=(deckString.length-4); i=i+4) {
+	    var cardID = deckString.substr(i,3);
+	    var card = getCardFromCardID(cardID);
+	    card.quantity = deckString.substr(i+3,1);
+	    deck[card.type].push(card);
+	}
 
         var text = "#[";
         text += deck.deckname;
@@ -1821,18 +1833,18 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
             var type = types[t];
             if (deck[type].length) {
                 switch (type) {
-                    case "2ally":
-                        text += "**Allies**";
-                        break;
-                    case "3attachment":
-                        text += "**Attachments**";
-                        break;
-                    case "4event":
-                        text += "**Events**";
-                        break;
-                    case "5quest":
-                        text += "**Quests**";
-                        break;
+                case "2ally":
+                    text += "**Allies**";
+                    break;
+                case "3attachment":
+                    text += "**Attachments**";
+                    break;
+                case "4event":
+                    text += "**Events**";
+                    break;
+                case "5quest":
+                    text += "**Quests**";
+                    break;
                 }
                 text += " (";
                 var number = 0;
@@ -1873,15 +1885,15 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
         deck["4event"] = [];
         deck["5quest"] = [];
 
-		deck.deckname = deckObject.deckname;
-		var deckString = deckObject.deckstring;
-		for (var i=0; i<=(deckString.length-4); i=i+4) {
-			var cardID = deckString.substr(i,3);
-			var card = getCardFromCardID(cardID);
-			card.quantity = deckString.substr(i+3,1);
-			deck[card.type].push(card);
-		}
-		
+	deck.deckname = deckObject.deckname;
+	var deckString = deckObject.deckstring;
+	for (var i=0; i<=(deckString.length-4); i=i+4) {
+	    var cardID = deckString.substr(i,3);
+	    var card = getCardFromCardID(cardID);
+	    card.quantity = deckString.substr(i+3,1);
+	    deck[card.type].push(card);
+	}
+	
         var text = "[size=18][tbc]";
         text += '[tbc';
         text += "]";
@@ -1926,18 +1938,18 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
             var type = types[t];
             if (deck[type].length) {
                 switch (type) {
-                    case "2ally":
-                        text += "[b]Allies[/b]";
-                        break;
-                    case "3attachment":
-                        text += "[b]Attachments[/b]";
-                        break;
-                    case "4event":
-                        text += "[b]Events[/b]";
-                        break;
-                    case "5quest":
-                        text += "[b]Quests[/b]";
-                        break;
+                case "2ally":
+                    text += "[b]Allies[/b]";
+                    break;
+                case "3attachment":
+                    text += "[b]Attachments[/b]";
+                    break;
+                case "4event":
+                    text += "[b]Events[/b]";
+                    break;
+                case "5quest":
+                    text += "[b]Quests[/b]";
+                    break;
                 }
                 text += " (";
                 var number = 0;
@@ -1971,6 +1983,7 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
     }
 
     this.exportText = function(deckObject) {
+	if (!deckObject) return alert("Please select a deck.");
 
         var text = "++++++++++++\r\n+For Reddit+\r\n++++++++++++ \r\n\r\n";
         text += this.markdown(deckObject);
@@ -2020,27 +2033,31 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
             r.onload = function(e) {
                 var deckArray = [deckname];
                 var regexp = /<card\s+qty="(\d)"\s+id="([0-9a-f\-]+)">/gi,
-                    match;
-					
-				deck.clear();
-				deck.deckname = deckname;
-			
+                match;
+		
+		deck.clear();
+		deck.deckname = deckname;
+		
                 while (match = regexp.exec(e.target.result)) {
                     for (var i in cardObject) {
                         if (cardObject[i].octgn == match[2]) {
-							console.log(cardObject[i].name_norm+' '+cardObject[i].type);
+			    //console.log(cardObject[i].name_norm+' '+cardObject[i].type);
                             var card = cardObject.slice(i,i+1)[0];
-							card.quantity = match[1];
-							console.log(card);
-							deck[card.type]=card;
-							
+			    card.quantity = +match[1];
+			    //console.log(card.quantity);
+			    deck[card.type].push(card);
+			    //console.log('decksize '+deck.countTotal());
                         }
                     }
                 }
             };
             r.readAsText(file);
         };
-		return $location.path("/dashboard/builder")
+	//	$location.path("/dashboard/builder")
+	$scope.$apply(function() {
+	    $location.path("/dashboard/builder");
+	});
+
     }
 
     this.localOctgn = function(_deck) {
@@ -2049,6 +2066,7 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
 
 
     this.exportOctgn = function(deckObject) {
+	if (!deckObject) return alert("Please select a deck.");
 
         var octgndeck = {
             "1hero": [],
@@ -2058,23 +2076,23 @@ angular.module("yapp", ["ui.router", "ngAnimate",'ngStorage','firebase'])
             "5quest": []
         };
         var warned = false;
-		
-		deck.deckname = deckObject.deckname;
-		var deckString = deckObject.deckstring;
-		for (var i=0; i<=(deckString.length-4); i=i+4) {
-			var cardID = deckString.substr(i,3);
-			var card = getCardFromCardID(cardID);
-			if (card.octgn == "") {
+	
+	deck.deckname = deckObject.deckname;
+	var deckString = deckObject.deckstring;
+	for (var i=0; i<=(deckString.length-4); i=i+4) {
+	    var cardID = deckString.substr(i,3);
+	    var card = getCardFromCardID(cardID);
+	    if (card.octgn == "") {
                 if (!warned) {
                     window.alert("Warning: Omitting cards that are not yet available in OCTGN.");
                     warned = true;
                 }
                 continue;
             }
-			card.quantity = deckString.substr(i+3,1);
-			octgndeck[card.type].push(card);
-		}
-		
+	    card.quantity = deckString.substr(i+3,1);
+	    octgndeck[card.type].push(card);
+	}
+	
 
         var text = "";
         text += '<?xml version="1.0" encoding="utf-8" standalone="yes"?>\n';

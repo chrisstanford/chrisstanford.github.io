@@ -4826,7 +4826,7 @@
     "text": "Response: After a card effect adds any number of resources to the resource pool of a hero you control, Harbor Master gains +1 Defense until the end of the round.",
     "flavor": "For the Elves of the High Kindred had not yet forsaken Middle-earth, and they dwelt still at that time at the Grey Havens...-The Fellowship of the Ring",
     "textc": "Response: After a card effect adds any number of resources to the resource pool of a hero you control, Harbor Master gains +1 Defense until the end of the round.",
-    "name_norm": "Harbor Mastery",
+    "name_norm": "Harbor Master",
     "octgn": "b7f8b82b-c448-4f43-a025-bf6b7e6f0310"
   },
   {
@@ -5690,7 +5690,7 @@
     "text": "Action: Lower the cost of the next card you play from your hand this round by 1. That card gains Doomed 1. (Limit once per round.)",
     "flavor": "`Let your counsellor Gríma keep all things till your return - and I pray that we may see it, though no wise man will deem it hopeful.` -The Two Towers",
     "textc": "Action: Lower the cost of the next card you play from your hand this round by 1. That card gains Doomed 1. (Limit once per round.)",
-    "name_norm": "Grima hero",
+    "name_norm": "Grima",
     "octgn": "b49c3563-b3cd-4f33-b706-c2a721028891"
   },
   {

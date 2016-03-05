@@ -38,7 +38,7 @@
     </table>
   </div>
 
-  <div class="cards" style="width:50%">
+  <div class="cardsdiv" style="width:50%">
     <table class="cardlist">
       <tbody>
 	<tr ng-repeat="card in cards.allcards | cardfilter:cards | filter:cards.filtersettings.search | orderBy:cards.order" class="cardrow" ng-mouseover="cards.changepreview(card)">
